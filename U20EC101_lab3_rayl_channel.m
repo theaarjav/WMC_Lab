@@ -20,20 +20,22 @@ z=[te_t zeros(1, (m-p))];  %Zero padding
 X=reshape(z, m,length(z)/m);    
 Y=transpose(X);
 K=bi2de(Y);
-k=double(K);
-Mod=qammod(k,M);
+k_d=double(K);
+Mod=qammod(k_d,M);
 rms=sqrt(mean(abs(Mod).^2));
 Mod=Mod./rms;
-H=raylrnd(1.414)
-ang=2*pi*rand()
-h=H.*(cos(ang)+j.*sin(ang));
-%h=1;
-sk=scatterplot(Mod.*h);
+
+%sk=scatterplot(Mod.*h);
 y=[];
 ber=[];
-snr=-10:1:10;
+snr=0:5:30;
 for k=1:length(snr)
-    
+    ber_temp=[]
+    for k_temp=1:1000
+    H=raylrnd(0.707);
+ang=2*pi*rand();
+h=H.*(cos(ang)+j.*sin(ang));
+%h=1;
 noised=awgn(Mod.*h,snr(k));
 
 DModed=qamdemod(noised,M);
@@ -43,20 +45,17 @@ DInp=reshape(DKt, length(z), 1);
 InpDem=transpose(DInp);
 Dem_ep_zp=InpDem(1:length(InpDem)-(m-p));
 
-%Dem_ep_zp2=[Dem_em_zp zeros(1, length(te_t)-length(Dem_em_zp))];
-RevT=transpose(Dem_ep_zp);
-res_Dem=reshape(RevT, length(x),8);
-res_dec=bi2de(res_Dem);
-res_one_row=transpose(res_dec);
-dem_Im=reshape(res_one_row, length(x_t), length(x_t));
-final=uint8(transpose(dem_Im));
-%figure(3);
-%imshow(final)
-%title('Output');
+%%
+%Not decoding till 256x256 as we don't need it
+%%
+
 error_bits=sum(te_t~=uint8(Dem_ep_zp));
-ber(k)=error_bits/length(te_t);
+ber_temp(k_temp)=error_bits/length(te_t);
+
 end
 %snr=-10:1:10;
+ber(k)=mean(ber_temp);
+end
 figure(2);
 semilogy(snr,ber);
 %axis([-20 20 -0.0001 0]);
